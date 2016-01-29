@@ -29,7 +29,7 @@ import os
 import sys
 from docopt import docopt
 
-import CatCompile, CatExec, CatClutter
+import CatCompile, CatExec, CatClutter, CatLogger
 
 __version__ = "0.1"
 

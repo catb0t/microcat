@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """exposes builtins for a stack machine."""
 
+import types
+import sys
+import CatLogger, CatClutter
 
 class CoreOps(object):
     """the most basic methods for using the stack.
@@ -166,8 +169,221 @@ class StackOps(object):
 class LogicOps(object):
     """math & logic operators: pretty straightforward."""
 
+    # adding things together
+
+    def add_num(self):
+        """( y x -- y+x )
+        add two numbers"""
+        y, x = self.popn()
+        self.push(x + y)
+
+    def add_str(self):
+        """( y x -- y+x )
+        concatenate two strings"""
+        y, x = self.popn()
+        self.push(x + y)
+
+    def add_list(self):
+        """( y x -- y+x )
+        concatenate two lists"""
+        y, x = self.popn()
+        for _, e in enumerate(y):
+            x.append(y)
+        self.push(x)
+
+    # who knows what else will go here in the future
+
+    # subtracting things
+
+    def sub_num(self):
+        """( z y x -- y-x )
+        subtract y from x"""
+        y, x = self.popn()
+        self.push(x - y)
+
+    def sub_str(self):
+        """( y x -- y-x )
+        remove a string x from a string y,
+        by removing the first occurrence of y from x"""
+        y, x = self.popn()
+        y.remove(x)
+        self.push(y)
+
+    def sub_multi_strs(self):
+        """( z y x -- y-x*z )
+        remove a string x from a string y, z times
+        if not z, all occurrences of x will be removed from y"""
+        y, x = self.popn()
+        for _ in range(z):
+            y.remove(x)
+        self.push(y)
+
+    def sub_list(self):
+        """( y x -- ??? )
+        this function is not yet implemented."""
+        CatLogger.Crit("list subtraction not yet implemented")
+
+    # multiplying things
+
+    def mlt_num(self):
+        """( y x -- y*x )
+        multiply y by x"""
+        y, x = self.popn()
+        self.push(y * x)
+
+    def mlt_str(self):
+        """( y x -- y*x )
+        interleave two strings"""
+        y, x = self.popn()
+        self.push("".join(i for j in zip(x, y) for i in j))
+
+    def mlt_numstr(self):
+        """( y x -- y*x )
+        copy a string y onto itself, x times"""
+        y, x = self.popn()
+        self.push(y * x)
+
+    def mlt_lists(self):
+        """( y x -- ??? )
+        this function is not yet implemented."""
+        CatLogger.Crit("list multiplication not yet implemented")
+
+    # splitting things
+
+    def divmod_num(self):
+        """( y x -- y/x y%x )
+        push a pair of numbers' quotient and then remainder (mod)"""
+        y, x = self.popn()
+        self.pushn([y / x, y % x])
+
+    def divmod_str(self):
+        """( y x -- ??? )
+        this function is not yet implemented."""
+        CatLogger.Crit("string division not yet implemented")
+
+    def divmod_list(self):
+        """( y x -- ??? )
+        this function is not yet implemented."""
+        CatLogger.Crit("string division not yet implemented")
+
+    def floor_num(self):
+        """( y x -- y//x )
+        push the floored quotient of two numbers"""
+        y, x = self.popn()
+        self.push(y // x)
+
+    # negating things
+
+    def neg_num(self):
+        """( x -- -x )
+        unary minus: flip the sign of a number"""
+        x = self.pop()
+        self.push(signflip(x))
+
+    def neg_str(self):
+        """( "Hello" -- "olleH" )
+        invert a string by reversing it"""
+        x = self.pop()
+        self.push(x[::-1])
+
+    def neg_list(self):
+        """( {1 2 3} -- {3 2 1} )
+        invert a list by reversing it"""
+        x = self.pop()
+        self.push(x[::-1])
+
+    # comparison operators
+
+    def equ_num(self):
+        """( y x -- y=x? )
+        push 1 if two numbers are of equal value, else 0"""
+        y, x = self.popn()
+        self.push(CatClutter.bool2int(y == x))
+
+    def equ_str(self):
+        """( y x -- y=x? )
+        push 1 if two strings are of equal value, else 0"""
+        y, x = self.popn()
+        self.push(CatClutter.bool2int(y == x))
+
+    def equ_numstr(self):
+        """( y x -- y=x? )
+        push 1 if a number is equal to the sum of the characters in a string"""
+        y, x = self.popn()
+        if allof(isstr(y), isnum(x)):
+            self.push(CatClutter.bool2int(x == CatClutter.strsum(y)))
+
+        elif allof(isnum(y), isstr(x)):
+            self.push(CatClutter.bool2int(y == CatClutter.strsum(x)))
+
+        else:
+            CatLogger.Crit("unexpected types for equ_numstr")
+
+    def equ_list(self):
+        """( y x -- y=x? )
+        push 1 if two lists hold the same content in the same order, else push 0"""
+        y, x = self.popn()
+        self.push(CatClutter.bool2int(x == y))
+
+    def gtr_num(self):
+        """( y x -- y>x? )
+        push 1 if y is greater than x, else push 0"""
+        y, x = self.popn()
+        self.push(CatClutter.bool2int(y > x))
+
+    def gtr_str(self):
+        """( y x -- y>x? )
+        push 1 if the sum of the characters in y is greater than that of x"""
+        y, x = self.popn()
+        self.push(CatClutter.strsum(y) > CatClutter.strsum(x))
+
+
 class IOOps(object):
     """input/output."""
+
+    def put(self):
+        """( x -- )
+        pops the top of the stack and prints/executes"""
+        x = self.copy()
+        if isnone(x):
+            return
+        else:
+            self.drop()
+            length = sys.stdout.write(str(x))
+            del length
+        del x
+
+    def emit(self):
+        """( x -- )
+        pops the top of the stack and prints that unicode char"""
+        x = self.pop()
+        try:
+            x = int(x)
+        except TypeError:
+            if isnone(x):
+                return
+            else:
+                self.log(str(x) + " is not a valid UTF-8 codepoint", 1)
+        else:
+            length = sys.stdout.write(chr(x))
+            del length
+        del x
+
+    def get(self):
+        """ ( -- x )
+        push a string from stdin until a newline is found"""
+        x = input()
+        self.push(x)
+
+    def reveal(self):
+        """prints the entire stack, pleasantly"""
+        stack = self.inspect()
+        peek = repr(stack)
+        sys.stdout.write("<{}> {}".format(len(stack), peek[1:len(peek) - 1]))
+
+class CombinatorOps(object):
+    """functional programming idioms:
+    map, apply, curry, bi*, etc"""
 
 class CodeOps(object):
     """operations that only make sense

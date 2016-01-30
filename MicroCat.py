@@ -9,14 +9,14 @@
 #
 
 
-"""µCat - a concatenative stack-based language
+"""µCat - a concatenative stack-based JIT-compiled language
 
-Usage: MicroCat.py [ SCRIPT... ]
+Usage: MicroCat.py [ --help | --version ] [ SCRIPT... ]
 
 Options:
 
     -h,        --help       print this help & exit
-    --version    print the version & filename then exit
+    --version               print the version & filename then exit
 
 Omission of all above arguments will result in reading from STDIN.
 
@@ -33,11 +33,12 @@ import CatCompile, CatExec, CatClutter, CatLogger
 
 __version__ = "0.1"
 
-
 def main():
+
     args = docopt.docopt(__doc__, version=__file__ + " " + __version__)
 
     fs = args["SCRIPT"]
+
     if fs:
         for _, e in enumerate(fs):
             runfile(e, args)
@@ -71,23 +72,23 @@ def interpret(args):
         ]) + "\n", end=""
     )
     print(
-        """run \"{} --help\" in your shell for help on {}
+        """press <CTRL-C> or run \"{} --help\" in your shell for help on {}
         {}
         µCat interpreter""".format(
             __file__, os.path.basename(__file__), CatClutter.MICROCAT_LOGO
         )
     )
-
-    shellnum = 0
-
     shopt = {
         "shnum_type": "int",
         "implicit_print": True,
     }
+    shellnum = 0
+
     while True:
         try:
-            numstr = str(eval(shopt["shnum_type"] + "(shellnum)"))
-            line = input("\n µCat 🐱  " + numstr + " )  ")
+            line = input("\n µCat 🐱  "
+                + str(eval(shopt["shnum_type"] + "(shellnum)")) + " )  "
+            )
         except KeyboardInterrupt:
             try: cmdlet = input(CatClutter.METAMENU)
             except KeyboardInterrupt: pass

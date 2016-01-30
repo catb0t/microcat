@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """execs bytes as opcodes."""
 
+import sys
+import CatLogger, CatStack, CatClutter
 
 class Execute(object):
 

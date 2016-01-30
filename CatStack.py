@@ -325,6 +325,8 @@ class LogicOps(object):
         y, x = self.popn()
         self.push(CatClutter.bool2int(x == y))
 
+    # greater?
+
     def gtr_num(self):
         """( y x -- y>x? )
         push 1 if y is greater than x, else push 0"""
@@ -335,7 +337,61 @@ class LogicOps(object):
         """( y x -- y>x? )
         push 1 if the sum of the characters in y is greater than that of x"""
         y, x = self.popn()
-        self.push(CatClutter.strsum(y) > CatClutter.strsum(x))
+        self.push(CatClutter.bool2int(CatClutter.strsum(y) > CatClutter.strsum(x)))
+
+    def gtr_list(self):
+        """( y x -- y>x? )
+        push 1 if the length of list y is greater than the length of list x"""
+        y, x = self.popn()
+        self.push(CatClutter.bool2int(len(y) > len(x)))
+
+    # less ?
+
+    def lss_num(self):
+        """( y x -- y>x? )
+        push 1 if y is less than x, else push 0"""
+        y, x = self.popn()
+        self.push(CatClutter.bool2int(y > x))
+
+    def lss_str(self):
+        """( y x -- y>x? )
+        push 1 if the sum of the characters in y is less than that of x"""
+        y, x = self.popn()
+        self.push(CatClutter.bool2int(CatClutter.strsum(y) < CatClutter.strsum(x)))
+
+    def lss_list(self):
+        """( y x -- y>x? )
+        push 1 if the length of list y is less than the length of list x"""
+        y, x = self.popn()
+        self.push(CatClutter.bool2int(len(y) < len(x)))
+
+
+class BitwiseOps(object):
+    """bitwise operations"""
+
+    def and(self):
+        """( y x -- x&y )
+        bitwise AND the bits of y with x"""
+        y, x = self.popn()
+        self.push(x & y)
+
+    def or(self):
+        """( y x -- y|x )
+        bitwise inclusive OR the bits of y with x"""
+        y, x = self.popn()
+        self.push(x | y)
+
+    def xor(self):
+        """( y x -- y^x )
+        bitwise XOR (exclusive) the bits of y with x"""
+        y, x = self.popn()
+        self.push(y ^ x)
+
+    def not(self):
+        """( x -- ~x )
+        bitwise NOT the bits of x"""
+        x = self.popn()
+        self.push(~x)
 
 
 class IOOps(object):
@@ -363,7 +419,7 @@ class IOOps(object):
             if isnone(x):
                 return
             else:
-                self.log(str(x) + " is not a valid UTF-8 codepoint", 1)
+                CatLogger.Crit(str(x) + " is not a valid UTF-8 codepoint")
         else:
             length = sys.stdout.write(chr(x))
             del length
@@ -371,9 +427,23 @@ class IOOps(object):
 
     def get(self):
         """ ( -- x )
-        push a string from stdin until a newline is found"""
+        push a string from stdin
+        consistent of the beginning of stdin to EOL"""
         x = input()
         self.push(x)
+
+    def get_exact(self):
+        """( x -- y )
+        get exactly x bytes of stdin, and push them as a string"""
+        for _ in range(10):
+            i = read_single_keypress()
+            _ = sys.stdout.write(i)
+            sys.stdout.flush()
+            x += i
+
+    def get_until(self):
+        """( x -- y )
+        get stdin until the character with codepoint x is read, pushing to y"""
 
     def reveal(self):
         """prints the entire stack, pleasantly"""
@@ -381,9 +451,11 @@ class IOOps(object):
         peek = repr(stack)
         sys.stdout.write("<{}> {}".format(len(stack), peek[1:len(peek) - 1]))
 
+
 class CombinatorOps(object):
     """functional programming idioms:
-    map, apply, curry, bi*, etc"""
+    map, apply, curry, cons, cat, i, car/cdr, dip, etc"""
+
 
 class CodeOps(object):
     """operations that only make sense
@@ -391,7 +463,14 @@ class CodeOps(object):
     pass
 
 
-class FullStack(CoreOps, StackOps, LogicOps, IOOps, CodeOps):
+class FullStack(
+        IOOps,
+        CodeOps,
+        CoreOps,
+        StackOps,
+        LogicOps,
+        BitwiseOps,
+        CombinatorOps,):
 
     def __init__(self, *args, **kwargs):
         """inherit from the various interface classes

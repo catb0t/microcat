@@ -50,11 +50,11 @@ def SetREPLopts(cmdlet, optlist):
         nval = cmdlet[1]
 
         if cmdlet[0] == "shnum_type":
-            if nval in ("int", "hex", "oct"):
+            if nval in ("int", "hex", "oct", "bin"):
                 optlist[cmdlet[0]] = nval
             else:
                 print(
-                    "junk base for shellnum counter: '{}' not (int, hex, oct)"
+                    "junk base for shellnum counter: '{}' not (int, hex, oct, bin)"
                     .format(nval)
                 )
         else:
@@ -158,3 +158,11 @@ isascii = (lambda struni:
                 .normalize('NFD', struni)
                 .encode('ascii', 'replace'))
                     == len(struni)))
+
+"""x = ""
+for _ in range(10):
+    i = read_single_keypress()
+    _ = sys.stdout.write(i)
+    sys.stdout.flush()
+    x += i
+"""

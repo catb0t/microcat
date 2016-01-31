@@ -58,7 +58,7 @@ def show_help(*args):
 
 
 def show_docs(*args):
-    pass
+    print("-> undefined")
 
 
 def show_vars(optlist):

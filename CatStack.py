@@ -4,6 +4,11 @@
 import sys
 import CatLogger, CatClutter
 
+from CatClutter import isnone, isstr, isnum, allof, anyof
+
+# NB `return print(x)` is equivalent to `print(x); return None`
+# NB and `return print(x), None` is
+
 class CoreOps(object):
     """the most basic methods for using the stack.
     cares about typing and exceptions the way your BIOS does: not at all."""
@@ -15,7 +20,10 @@ class CoreOps(object):
     def pop(self, idex = (-1)):
         """( x -- )
         drop and return an item from the TOS"""
-        return self.__stack__.pop(idex)
+        try:
+            return self.__stack__.pop(idex)
+        except IndexError as err:
+            return print(err)
 
     def popn(self, n = 2, idx = (-1)):
         """( z y x -- )
@@ -29,7 +37,10 @@ class CoreOps(object):
                 break
         if len(x) == n:
             return tuple(x)
-        return (None, None)
+        try:
+            raise IndexError("pop from empty list")
+        except IndexError as err:
+            return print(err), None
 
     def push(self, x):
         """( -- x )
@@ -45,7 +56,10 @@ class CoreOps(object):
     def copy(self):
         """( y x -- y x x )
         return an item from the the stack without dropping"""
-        return self.__stack__[-1]
+        try:
+            return self.__stack__[-1]
+        except IndexError as err:
+            return print(err)
 
     def copyn(self, n = 2):
         """( z y x -- z y x z y x )
@@ -61,7 +75,13 @@ class CoreOps(object):
     def insertn(self, items, lidex):
         """( z y x -- z b y x )
         add a list of items to the stack at the given index"""
-        iter(items)
+        try:
+            iter(items)
+        except TypeError as err:
+            print(err)
+            CatLogger.Crit("MicroCat bug found!", items, "is not iterable\n")
+            raise
+
         for _, obj in enumerate(items):
             self.insert(lidex, obj)
             lidex += 1
@@ -105,7 +125,7 @@ class StackOps(object):
     def swap(self):
         """( y x -- x y )
         swap the top two items on the stack"""
-        self.pushn(self.popn())
+        self.pushn()
 
     def rot(self):
         """( z y x w -- z w y x )
@@ -125,7 +145,9 @@ class StackOps(object):
     def roll(self):
         """( z y x -- y x z )
         roll the stack up"""
-        self.push(self.pop(0))
+        x = self.pop(0)
+        if not isnone(x):
+            self.push(x)
 
     def rolln(self, n = 2):
         """( z y x -- x z y )
@@ -136,7 +158,9 @@ class StackOps(object):
     def uroll(self):
         """( z y x -- x z y )
         roll the stack down"""
-        self.insert(self.pop(), 0)
+        x = self.pop()
+        if not isnone(x)
+            self.insert(, 0)
 
     def urolln(self, n = 2):
         """( z y x -- y x z )
@@ -179,18 +203,22 @@ class LogicOps(object):
         """( y x -- y+x )
         add two numbers"""
         y, x = self.popn()
-        self.push(x + y)
+        if allof(not isnone(y), not isnone(x)):
+            self.push(x + y)
 
     def add_str(self):
         """( y x -- y+x )
         concatenate two strings"""
         y, x = self.popn()
-        self.push(x + y)
+        if allof(not isnone(y), not isnone(x)):
+            self.push(x + y)
 
     def add_list(self):
         """( y x -- y+x )
         concatenate two lists"""
         y, x = self.popn()
+        if anyof(isnone(y), isnone(x)):
+            return
         for _, e in enumerate(y):
             x.append(y)
         self.push(x)
@@ -377,6 +405,7 @@ class BitwiseOps(object):
         """( y x -- x&y )
         bitwise AND the bits of y with x"""
         y, x = self.popn()
+        if isnone()
         self.push(x & y)
 
     def b_or(self):
@@ -452,12 +481,22 @@ class IOOps(object):
         """( x -- y )
         get stdin until the character with codepoint x is read, pushing to y"""
         x = self.pop()
-        if isnum(x):
+        if isnone(x):
+            return
+        elif isnum(x):
             x = chr(x)
         elif isstr(x):
             x = x[0]
         from input_constrain import until
         self.push(until(x))
+
+    def get_until_not(self):
+        """( -- y )
+        read stdin until !char"""
+        x = self.pop()
+        if isnone(x):
+            return
+        elif isnum
 
     def reveal(self):
         """prints the entire stack, pleasantly"""
@@ -465,10 +504,6 @@ class IOOps(object):
         peek = repr(stack)
         sys.stdout.write("<{}> {}".format(len(stack), peek[1:len(peek) - 1]))
 
-
-class CombinatorOps(object):
-    """functional programming idioms:
-    map, apply, curry, cons, cat, i, car/cdr, dip, etc"""
 
 
 class CodeOps(object):
@@ -483,8 +518,7 @@ class FullStack(
         CoreOps,
         StackOps,
         LogicOps,
-        BitwiseOps,
-        CombinatorOps,):
+        BitwiseOps,):
 
     def __init__(self, *args, **kwargs):
         """inherit from the various interface classes

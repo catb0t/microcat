@@ -69,7 +69,8 @@ def runfile(fname, args):
             fcontents = fio.read()
             fio.close()
             bc = CatCompile.Compile(fcontents, flags=args)
-        if
+        if args["-o"]:
+            fio = open(args["-o"], "")
         CatExec.Execute(bc, flags=args)
 
 

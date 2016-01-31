@@ -5,32 +5,6 @@ tiny module for crufty-feeling tiny contextless functions and constants
 that just clutter the other modules more than they need to
 """
 
-import sys
-
-class myStdout(object):
-    def __init__(self):
-        """remove unicode glyphs from strings written to stdout."""
-        pass
-
-    def write(self, string):
-        """remove unicode glyphs from strings written to stdout."""
-        # remove specific things, etc
-        args = list("".join(
-            " ".join(string)
-            .replace("µ", "micro")
-        ))
-
-        if not isascii("".join(args)):
-            for i, e in enumerate(args):
-                if ord(e) > 127:
-                    string[i] = ""
-
-        return sys.__stdout__.write("".join(string))
-
-    def flush(self):
-        return sys.__stdout__.flush()
-
-
 def SetREPLopts(cmdlet, optlist):
     """set envrionment variables, etc in the repl"""
     cmdlet = cmdlet.strip().split(" ")
@@ -69,6 +43,7 @@ def SetREPLopts(cmdlet, optlist):
         )
     return optlist
 
+
 def show_help(*args):
     try:
         f = open("README.md", "r")
@@ -81,8 +56,10 @@ def show_help(*args):
         f.close()
         pager(fc)
 
+
 def show_docs(*args):
     pass
+
 
 def show_vars(optlist):
     print(
@@ -94,20 +71,22 @@ def show_vars(optlist):
         )
     )
 
+
 def show_cmds(*args):
     print("-> undefined")
+
 
 def EOF(code = 0):
     """exit the repl"""
     print("\n{}, {}; i {} :(\n".format(hex(50159747054), "0x0" + hex(14544909)[2:], hex(4276215469)))
     exit(code)
 
-METAMENU = """
+METAMENU = r"""
              ____        _
      _   _  / __/ ___ _ | |_
     | | | |/ /   /  _` || __|
     | |_| |\ \__ µ (_| || |_
-    |  _,_| \___\\\___,_| \__|
+    |  _,_| \___\\___,_| \__|
     |_/
 
     this is the metamenu.
@@ -126,7 +105,7 @@ METAMENU = """
     /
     \_<- """
 
-MICROCAT_LOGO = """
+MICROCAT_LOGO = r"""
 \t███╗   ███╗ ██╗  ██████╗ ██████╗   ██████╗   ██████╗  █████╗  ████████╗
 \t████╗ ████║ ██║ ██╔════╝ ██╔══██╗ ██╔═══██╗ ██╔════╝ ██╔══██╗ ╚══██╔══╝
 \t██╔████╔██║ ██║ ██║      ██████╔╝ ██║   ██║ ██║      ███████║    ██║
@@ -158,11 +137,3 @@ isascii = (lambda struni:
                 .normalize('NFD', struni)
                 .encode('ascii', 'replace'))
                     == len(struni)))
-
-"""x = ""
-for _ in range(10):
-    i = read_single_keypress()
-    _ = sys.stdout.write(i)
-    sys.stdout.flush()
-    x += i
-"""

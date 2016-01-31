@@ -11,10 +11,11 @@
 
 """µCat - a concatenative stack-based JIT-compiled language
 
-Usage: MicroCat.py [ --help | --version ] [ SCRIPT... ]
+Usage: MicroCat.py [ -o FILENAME ] [ SCRIPT... ]
 
 Options:
 
+    -o         --output     write compiled bytecode to this file instead of running
     -h,        --help       print this help & exit
     --version               print the version & filename then exit
 
@@ -26,15 +27,15 @@ issues, source, contact: github.com/catb0t/mouse16
 
 import readline
 import os
-import sys
 from docopt import docopt
 
-import CatCompile, CatExec, CatClutter, CatLogger
+import CatCompile, CatExec, CatClutter
 
 __version__ = "0.1"
 
-def main():
 
+def main():
+    """main entry point."""
     args = docopt.docopt(__doc__, version=__file__ + " " + __version__)
 
     fs = args["SCRIPT"]
@@ -47,11 +48,12 @@ def main():
 
 
 def runfile(fname, args):
-    """open a file for reading, first in binary: if the first byte of the file
-    is 0xFF, the file is executed directly as bytecode.
-    if the first byte is not 0xFF"""
+    """open a file for reading
+    first in binary; if the first byte of the file is 0xFF or the filename ends in "microcat_bin",
+    the file is executed directly as bytecode.
+    else, the contents of the file are read as text and compiled, then run"""
     try:
-        fio = open(fname, "rt")
+        fio = open(fname, "rb")
     except (FileNotFoundError, IOError) as err:
         print(err)
         print("stat: cannot stat '{}': no such file or directory"
@@ -60,11 +62,19 @@ def runfile(fname, args):
     else:
         fcontents = fio.read()
         fio.close()
-        bc = CatCompile.Compile(fcontents, flags=args)
-        CatExec.Execute(fcontents, flags=args)
+        if fcontents[0] == 255 or fname.endswith("microcat_bin"):
+            bc = fcontents
+        else:
+            fio = open(fname, "rt")
+            fcontents = fio.read()
+            fio.close()
+            bc = CatCompile.Compile(fcontents, flags=args)
+        if
+        CatExec.Execute(bc, flags=args)
 
 
 def interpret(args):
+    """an interpreter suite"""
     print(
         "flags:" + " ".join([
             str(list(args.keys())[i]) + ":" + str(list(args.values())[i])
@@ -90,11 +100,15 @@ def interpret(args):
                 + str(eval(shopt["shnum_type"] + "(shellnum)")) + " )  "
             )
         except KeyboardInterrupt:
-            try: cmdlet = input(CatClutter.METAMENU)
-            except KeyboardInterrupt: pass
-            except EOFError:          CatClutter.EOF()
+            try:
+                cmdlet = input(CatClutter.METAMENU)
+            except KeyboardInterrupt:
+                pass
+            except EOFError:
+                CatClutter.EOF()
             else:
-                if cmdlet: shopt = CatClutter.SetREPLopts(cmdlet, shopt)
+                if cmdlet:
+                    shopt = CatClutter.SetREPLopts(cmdlet, shopt)
             # end metamenu
         except EOFError:
             CatClutter.EOF()

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """exposes builtins for a stack machine."""
 
-import types
 import sys
 import CatLogger, CatClutter
 
@@ -84,17 +83,22 @@ class CoreOps(object):
         return stk
 
 class StackOps(object):
-    """type-agnostic anonical stack-machinisms
+    """type-agnostic canonical stack-machinisms
     dup, swap, rot, drop, etc"""
     def dup(self):
         """( y x -- y x x )
         push a copy of the TOS"""
-        self.push(self.copy())
+        x = self.copy()
+        if isnone(x):
+            return
+        self.push(x)
 
     def dupn(self, n = 2):
         """( z y x -- z y x y x )
         copy n items from the TOS; push them preserving order"""
         x = self.copyn(n)
+        if isnone(x):
+            return
         for i in x:
             self.push(i)
 
@@ -348,19 +352,19 @@ class LogicOps(object):
     # less ?
 
     def lss_num(self):
-        """( y x -- y>x? )
+        """( y x -- y<x? )
         push 1 if y is less than x, else push 0"""
         y, x = self.popn()
         self.push(CatClutter.bool2int(y > x))
 
     def lss_str(self):
-        """( y x -- y>x? )
+        """( y x -- y<x? )
         push 1 if the sum of the characters in y is less than that of x"""
         y, x = self.popn()
         self.push(CatClutter.bool2int(CatClutter.strsum(y) < CatClutter.strsum(x)))
 
     def lss_list(self):
-        """( y x -- y>x? )
+        """( y x -- y<x? )
         push 1 if the length of list y is less than the length of list x"""
         y, x = self.popn()
         self.push(CatClutter.bool2int(len(y) < len(x)))
@@ -369,13 +373,13 @@ class LogicOps(object):
 class BitwiseOps(object):
     """bitwise operations"""
 
-    def and(self):
+    def b_and(self):
         """( y x -- x&y )
         bitwise AND the bits of y with x"""
         y, x = self.popn()
         self.push(x & y)
 
-    def or(self):
+    def b_or(self):
         """( y x -- y|x )
         bitwise inclusive OR the bits of y with x"""
         y, x = self.popn()
@@ -387,7 +391,7 @@ class BitwiseOps(object):
         y, x = self.popn()
         self.push(y ^ x)
 
-    def not(self):
+    def b_not(self):
         """( x -- ~x )
         bitwise NOT the bits of x"""
         x = self.popn()
@@ -435,15 +439,25 @@ class IOOps(object):
     def get_exact(self):
         """( x -- y )
         get exactly x bytes of stdin, and push them as a string"""
-        for _ in range(10):
-            i = read_single_keypress()
-            _ = sys.stdout.write(i)
-            sys.stdout.flush()
-            x += i
+        x = self.pop()
+        if isnone(x):
+            return
+        if not isnum(x):
+            CatLogger.Crit("need a number of characters to get not " + repr(type(x)))
+            return
+        from input_constrain import thismany
+        self.push(thismany(x))
 
     def get_until(self):
         """( x -- y )
         get stdin until the character with codepoint x is read, pushing to y"""
+        x = self.pop()
+        if isnum(x):
+            x = chr(x)
+        elif isstr(x):
+            x = x[0]
+        from input_constrain import until
+        self.push(until(x))
 
     def reveal(self):
         """prints the entire stack, pleasantly"""

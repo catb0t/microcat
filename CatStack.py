@@ -414,7 +414,7 @@ class BitwiseOps(object):
         y, x = self.popn()
         self.push(x | y)
 
-    def xor(self):
+    def b_xor(self):
         """( y x -- y^x )
         bitwise XOR (exclusive) the bits of y with x"""
         y, x = self.popn()

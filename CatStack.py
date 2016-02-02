@@ -159,8 +159,8 @@ class StackOps(object):
         """( z y x -- x z y )
         roll the stack down"""
         x = self.pop()
-        if not isnone(x)
-            self.insert(, 0)
+        if not isnone(x):
+            self.insert(x, 0)
 
     def urolln(self, n = 2):
         """( z y x -- y x z )
@@ -405,7 +405,8 @@ class BitwiseOps(object):
         """( y x -- x&y )
         bitwise AND the bits of y with x"""
         y, x = self.popn()
-        if isnone()
+        if anyof(isnone(y), isnone(x)):
+            return
         self.push(x & y)
 
     def b_or(self):
@@ -487,6 +488,9 @@ class IOOps(object):
             x = chr(x)
         elif isstr(x):
             x = x[0]
+        else:
+            CatLogger.Crit("bad type for get_until_not; ignoring")
+            return
         from input_constrain import until
         self.push(until(x))
 
@@ -496,7 +500,15 @@ class IOOps(object):
         x = self.pop()
         if isnone(x):
             return
-        elif isnum
+        elif isnum(x):
+            x = chr(x)
+        elif isstr(x):
+            x = x[0]
+        else:
+            CatLogger.Crit("bad type for get_until_not; ignoring")
+            return
+        from input_constrain import until_not
+        self.push(until_not(x))
 
     def reveal(self):
         """prints the entire stack, pleasantly"""

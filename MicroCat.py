@@ -29,13 +29,15 @@ import readline
 import os
 from docopt import docopt
 
-import CatCompile, CatExec, CatClutter
+import CatExec, CatClutter
+
+runner = CatExec.Execute()
 
 __version__ = "0.1"
 
 
 def main():
-    """main entry point."""
+    "main entry point."
     args = docopt.docopt(__doc__, version=__file__ + " " + __version__)
 
     fs = args["SCRIPT"]
@@ -48,30 +50,19 @@ def main():
 
 
 def runfile(fname, args):
-    """open a file for reading
-    first in binary; if the first byte of the file is 0xFF or the filename ends in "microcat_bin",
-    the file is executed directly as bytecode.
-    else, the contents of the file are read as text and compiled, then run"""
+    "open a file for reading"
+    runner = CatExec.Executer()
     try:
-        fio = open(fname, "rb")
+        fio = open(fname, "rt")
     except (FileNotFoundError, IOError) as err:
         print(err)
         print("stat: cannot stat '{}': no such file or directory"
             .format(fname)
         )
     else:
-        fcontents = fio.read()
-        fio.close()
-        if fcontents[0] == 255 or fname.endswith("microcat_bin"):
-            bc = fcontents
-        else:
-            fio = open(fname, "rt")
-            fcontents = fio.read()
-            fio.close()
-            bc = CatCompile.Compile(fcontents, flags=args)
-        if args["-o"]:
-            fio = open(args["-o"], "")
-        CatExec.Execute(bc, flags=args)
+        with fcontents as fio.read(): f = fcontents
+        if args["-o"]: out = open(args["-o"], "wt")
+        runner.Run(f, flags=args)
 
 
 def interpret(args):
@@ -89,11 +80,14 @@ def interpret(args):
             __file__, os.path.basename(__file__), CatClutter.MICROCAT_LOGO
         )
     )
+    # repl options
     shopt = {
         "shnum_type": "int",
         "implicit_print": True,
     }
+    # repl counter (I don't know why, it's just cool)
     shellnum = 0
+    runner   = CatExec.Executer()
 
     while True:
         try:
@@ -115,8 +109,7 @@ def interpret(args):
             CatClutter.EOF()
         else:
             shellnum += 1
-            bc = CatCompile.Compile(line, flags=args)
-            CatExec.Execute(bc, flags=args, interp_opts=shopt)
+            runner.Run(line, flags=args, interp_opts=shopt)
 
 if __name__ == "__main__":
     main()

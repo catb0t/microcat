@@ -17,8 +17,8 @@ def SetREPLopts(cmdlet, optlist):
         "exit": (exit,      (0)),
     }
     if cmdlet[0] in builtins:
-        func, args = builtins.get(cmdlet[0])
-        func(args)
+        func, *args = builtins.get(cmdlet[0])
+        func(*args)
 
     elif cmdlet[0] in optlist and len(cmdlet) == 2:
         nval = cmdlet[1]
@@ -58,7 +58,7 @@ def show_help(*args):
 
 
 def show_docs(*args):
-    print("-> undefined")
+    print("-> no docs yet!")
 
 
 def show_vars(optlist):

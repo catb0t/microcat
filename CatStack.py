@@ -536,3 +536,7 @@ class FullStack(
         """inherit from the various interface classes
         and provide an interface to each's methods"""
         self.__stack__ = []
+
+# import inspect
+# from pprint import pprint
+# pprint((inspect.getmembers(FullStack(), predicate=inspect.ismethod)))

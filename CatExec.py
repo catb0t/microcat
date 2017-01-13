@@ -4,8 +4,10 @@
 import sys
 import CatLogger, CatStack, CatClutter
 
-class Execute(object):
+class Executer(object):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, code, *args, **kwargs):
         """takes in numbers and does stuff."""
-        pass
+        self.stk = Stack()
+
+    def Run(self):
